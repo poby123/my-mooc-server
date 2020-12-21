@@ -15,7 +15,7 @@ class Auth {
    * @param {string} grade
    * @param {string} _class
    * @param {string} email
-   * @param {string} auth
+   * @param {Number} auth
    */
   signup = async function (id, password, number, grade, _class, email, auth) {
     return new Promise((resolve, reject) => {
@@ -38,7 +38,7 @@ class Auth {
           }
         });
       } else {
-        throw new Error('null value');
+        reject(new Error('필수 프로퍼티가 비어있습니다.'));
       }
     });
   };
@@ -65,7 +65,7 @@ class Auth {
           }
         });
       } else {
-        throw new Error('null value');
+        reject(new Error('필수 프로퍼티가 비어있습니다'));
       }
     });
   };

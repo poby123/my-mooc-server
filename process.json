@@ -1,0 +1,7 @@
+{
+    "watch": ["server"],
+    "ignore_watch" : ["node_modules", "public/images", "uploads/*"],
+    "watch_options": {
+      "followSymlinks": false
+    }
+  }

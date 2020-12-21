@@ -6,10 +6,10 @@ const dbConfig = require('../config/database.js');
 const sessionAuth = require('../config/session.js');
 
 const connection = mysql.createPool(dbConfig);
+router.use(session(sessionAuth));
+
 const Auth = require('../controller/AuthController');
 const myAuth = new Auth(connection);
-
-router.use(session(sessionAuth));
 
 /* POST /auth/signup. */
 router.post('/signup', async (req, res) => {
@@ -29,6 +29,10 @@ router.post('/signup', async (req, res) => {
   }
 });
 
+router.get('/signin', (req, res) => {
+  res.render('signin');
+});
+
 /* POST /auth/signin */
 router.post('/signin', async (req, res) => {
   let { id, password } = req.body;
@@ -44,15 +48,14 @@ router.post('/signin', async (req, res) => {
 
         req.session.save(() => {
           res.json({ result: true });
-          console.log(req.session.id);
         });
       } else {
-        res.json({ result: false });
+        res.json({ result: false, error: '아이디나 비밀번호가 일치하지 않습니다.' });
       }
     } catch (err) {
       console.log('[ IN AUTH.JS SIGNIN ROUTER ]', err);
       res.status(500);
-      res.json({ result: false, error: 'Database error' });
+      res.json({ result: false, error: err.message });
     }
   } else {
     res.status(400);
@@ -63,11 +66,10 @@ router.post('/signin', async (req, res) => {
 /* GET /auth/signout */
 router.get('/signout', (req, res) => {
   if (req.session.name) {
-    console.log(req.session.name);
     req.session.destroy((err) => {
       if (err) {
         res.status(500);
-        res.json({ result: false, error: 'Error is occured, during signout' });
+        res.json({ result: false, error: err.message });
       } else {
         req.session;
         res.json({ result: true });
