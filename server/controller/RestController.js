@@ -5,11 +5,69 @@ class Rest {
    *
    * @param {object} connection
    * @param {string} uploadPath
+   * @param {string} category
+   * @param {string} writer
    */
   constructor(connection, uploadPath) {
     this.connection = connection;
     this.uploadPath = uploadPath;
   }
+
+  getBoard = async function (session, category, writer) {
+    return new Promise((resolve, reject) => {
+      if (category) {
+        const query =
+          'SELECT tbl_board.*, tbl_user.profile_image FROM tbl_board RIGHT JOIN tbl_user ON tbl_user.id = tbl_board.writer where category=?';
+        const params = [category];
+        this.connection.query(query, params, (err, select_result) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(select_result);
+          }
+        });
+      } else if (writer) {
+        const query =
+          'SELECT tbl_board.*, tbl_user.profile_image FROM tbl_board RIGHT JOIN tbl_user ON tbl_user.id = tbl_board.writer where writer=?';
+        const params = [writer];
+        this.connection.query(query, params, (err, select_result) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(select_result);
+          }
+        });
+      } else {
+        const query =
+          'SELECT tbl_board.*, tbl_user.profile_image FROM tbl_board RIGHT JOIN tbl_user ON tbl_user.id = tbl_board.writer where category=? OR category=? OR category=?';
+        const allString = `0-0`;
+        const gradeString = `${session.grade}-0`;
+        const classString = `${session.grade}-${session.class}`;
+        const params = [allString, gradeString, classString];
+        this.connection.query(query, params, (err, select_result) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(select_result);
+          }
+        });
+      }
+    });
+  };
+
+  getUser = async function (session) {
+    return new Promise((resolve, reject) => {
+      const query = 'SELECT * FROM tbl_user where id=?';
+      const param = [session.name];
+      this.connection.query(query, param, (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      });
+    });
+  };
 
   /**
    *
@@ -84,6 +142,47 @@ class Rest {
       fs.unlink(path, (err) => {
         if (err) {
           console.log(err);
+        }
+      });
+    });
+  };
+
+  /**
+   * @param {object} session
+   * @param {string} profile
+   * @param {Array} profile_image
+   */
+  updateProfile = async function (session, profile, profile_image) {
+    return new Promise((resolve, reject) => {
+      this.connection.query('SELECT profile_image FROM tbl_user WHERE id=?', [session.name], (err, select_result) => {
+        if (err) {
+          reject(err);
+        } else {
+          let query = 'UPDATE tbl_user SET ';
+          let params = [];
+          if (profile) {
+            query += ' profile=? ';
+            params.push(profile);
+          } else {
+            query += ' profile=NULL ';
+          }
+          if (profile_image) {
+            query += ', profile_image=? ';
+            params.push(profile_image);
+          }
+          query += ' WHERE id=? ';
+          params.push(session.name);
+
+          this.connection.query(query, params, (err) => {
+            if (err) {
+              reject(err);
+            } else {
+              if (profile_image && select_result[0].profile_image) {
+                this.deleteFiles([select_result[0].profile_image]);
+              }
+              resolve(true);
+            }
+          });
         }
       });
     });

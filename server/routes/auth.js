@@ -30,12 +30,17 @@ router.post('/signup', async (req, res) => {
 });
 
 router.get('/signin', (req, res) => {
-  res.render('signin');
+  // res.render('signin');
+  if (req.session.name) {
+    res.json({ result: true });
+  } else {
+    res.json({ result: false });
+  }
 });
 
 /* POST /auth/signin */
 router.post('/signin', async (req, res) => {
-  let { id, password } = req.body;
+  const { id, password } = req.body;
   if (id && password) {
     try {
       const result = await myAuth.signin(id, password);
@@ -46,8 +51,10 @@ router.post('/signin', async (req, res) => {
         req.session.class = result.user.class;
         req.session.status = result.user.status;
 
+        const { password, ...others } = result.user;
+
         req.session.save(() => {
-          res.json({ result: true });
+          res.json({ result: true, user: others });
         });
       } else {
         res.json({ result: false, error: '아이디나 비밀번호가 일치하지 않습니다.' });
